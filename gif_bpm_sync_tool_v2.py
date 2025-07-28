@@ -68,19 +68,20 @@ def create_popout_window():
     """Create the pop-out window for streaming/OBS"""
     global popout_window, popout_screen, popout_active
     if popout_window is None:
-        popout_window = pygame.display.set_mode((POPOUT_WIDTH, POPOUT_HEIGHT), pygame.RESIZABLE)
-        popout_screen = popout_window
+        # Create a separate surface for the pop-out window
+        popout_screen = pygame.Surface((POPOUT_WIDTH, POPOUT_HEIGHT))
         popout_active = True
-        pygame.display.set_caption("BPMdotGIF - Stage Window")
+        print("Pop-out window created!")
+        print("For OBS: Use 'Window Capture' and select this application window")
+        print("The pop-out preview will appear in the top-right corner of the main window")
 
 def close_popout_window():
     """Close the pop-out window"""
     global popout_window, popout_screen, popout_active
-    if popout_window is not None:
-        popout_window = None
+    if popout_screen is not None:
         popout_screen = None
         popout_active = False
-        pygame.display.set_caption("GIF BPM Sync Tool v3")
+        print("Pop-out window closed.")
 
 def set_stage_background_color(color):
     """Set the stage background color"""
@@ -94,11 +95,19 @@ def set_stage_background_image(image_path):
         if image_path and os.path.exists(image_path):
             # Load and scale the background image
             bg_image = pygame.image.load(image_path)
+            # Convert to ensure compatibility
+            bg_image = bg_image.convert_alpha()
             stage_background_image = image_path
             stage_background_image_surface = bg_image
+            print(f"Background image loaded: {image_path}")
         else:
             stage_background_image = None
             stage_background_image_surface = None
+            print("No image file selected or file doesn't exist.")
+    except pygame.error as e:
+        print(f"Pygame error loading background image: {e}")
+        stage_background_image = None
+        stage_background_image_surface = None
     except Exception as e:
         print(f"Error loading background image: {e}")
         stage_background_image = None
@@ -205,8 +214,26 @@ def draw_popout_stage():
     slot = slots[active_slot]
     draw_gif_on_stage(popout_screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip)
     
-    # Update the popout display
-    pygame.display.flip()
+    # Draw the popout screen to the main display (top-right corner)
+    if popout_active:
+        # Create a smaller preview in the main window
+        preview_width = 300
+        preview_height = 200
+        preview_x = window_width - preview_width - 10
+        preview_y = 10
+        
+        # Draw border around preview
+        pygame.draw.rect(screen, (100, 100, 100), (preview_x - 2, preview_y - 2, preview_width + 4, preview_height + 4))
+        pygame.draw.rect(screen, (200, 200, 200), (preview_x - 1, preview_y - 1, preview_width + 2, preview_height + 2))
+        
+        # Draw preview
+        preview_surface = pygame.transform.smoothscale(popout_screen, (preview_width, preview_height))
+        screen.blit(preview_surface, (preview_x, preview_y))
+        
+        # Draw label
+        font = pygame.font.Font(None, 24)
+        label = font.render("OBS Preview", True, (255, 255, 255))
+        screen.blit(label, (preview_x, preview_y - 25))
 
 def create_ui():
     global manager, window_width, window_height
