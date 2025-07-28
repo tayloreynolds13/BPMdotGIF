@@ -22,6 +22,7 @@ POPOUT_HEIGHT = 600
 popout_window = None
 popout_screen = None
 popout_active = False
+current_window = "main"  # "main" or "stage"
 stage_background_color = (20, 20, 20)  # Default dark gray
 stage_background_image = None
 stage_background_image_surface = None
@@ -68,22 +69,30 @@ manager = pygame_gui.UIManager((window_width, window_height))
 
 def create_popout_window():
     """Create the pop-out window for streaming/OBS"""
-    global popout_window, popout_screen, popout_active
+    global popout_window, popout_screen, popout_active, current_window
     if popout_window is None:
-        # Create a separate surface for the pop-out (will be saved as image)
-        popout_screen = pygame.Surface((POPOUT_WIDTH, POPOUT_HEIGHT))
+        # Create a separate window for the stage
+        popout_window = pygame.display.set_mode((POPOUT_WIDTH, POPOUT_HEIGHT), pygame.RESIZABLE)
+        popout_screen = popout_window
         popout_active = True
-        print("Pop-out window created!")
-        print("The pop-out content will be saved as 'stage_window.png' for OBS")
-        print("In OBS: Use 'Image' source and select 'stage_window.png'")
+        current_window = "stage"
+        pygame.display.set_caption("BPMdotGIF - Stage Window")
+        print("Stage window created!")
+        print("For OBS: Use 'Window Capture' and select 'BPMdotGIF - Stage Window'")
+        print("Press ESC to return to main window")
 
 def close_popout_window():
     """Close the pop-out window"""
-    global popout_window, popout_screen, popout_active
-    if popout_screen is not None:
+    global popout_window, popout_screen, popout_active, current_window
+    if popout_window is not None:
+        # Restore the main window
+        pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
+        pygame.display.set_caption("GIF BPM Sync Tool v3")
+        popout_window = None
         popout_screen = None
         popout_active = False
-        print("Pop-out window closed.")
+        current_window = "main"
+        print("Stage window closed.")
 
 def set_stage_background_color(color):
     """Set the stage background color"""
@@ -216,27 +225,8 @@ def draw_popout_stage():
     slot = slots[active_slot]
     draw_gif_on_stage(popout_screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip)
     
-    # Save the pop-out content as an image for OBS
-    pygame.image.save(popout_screen, "stage_window.png")
-    
-    # Draw preview in main window
-    preview_width = 300
-    preview_height = 200
-    preview_x = window_width - preview_width - 10
-    preview_y = 10
-    
-    # Draw border around preview
-    pygame.draw.rect(screen, (100, 100, 100), (preview_x - 2, preview_y - 2, preview_width + 4, preview_height + 4))
-    pygame.draw.rect(screen, (200, 200, 200), (preview_x - 1, preview_y - 1, preview_width + 2, preview_height + 2))
-    
-    # Draw preview
-    preview_surface = pygame.transform.smoothscale(popout_screen, (preview_width, preview_height))
-    screen.blit(preview_surface, (preview_x, preview_y))
-    
-    # Draw label
-    font = pygame.font.Font(None, 24)
-    label = font.render("OBS Image", True, (255, 255, 255))
-    screen.blit(label, (preview_x, preview_y - 25))
+    # Update the stage window display
+    pygame.display.flip()
 
 def create_ui():
     global manager, window_width, window_height
@@ -492,6 +482,13 @@ while running:
                 handle_tap()
         
         if event.type == pygame.KEYDOWN:
+            # ESC key to switch between windows
+            if event.key == pygame.K_ESCAPE:
+                if current_window == "stage":
+                    close_popout_window()
+                elif current_window == "main" and popout_active:
+                    create_popout_window()
+            
             # Check if any text entry field is focused to prevent hotkey conflicts
             text_field_focused = (ui_elements['bpm_input'].is_focused or 
                                 ui_elements['beats_input'].is_focused)
@@ -602,9 +599,13 @@ while running:
             elif event.ui_element == ui_elements['stage_height_slider']:
                 stage_height_ratio = event.value
         
-        manager.process_events(event)
+        # Only process UI events when in main window
+        if current_window == "main":
+            manager.process_events(event)
     
-    manager.update(time_delta)
+    # Only update UI when in main window
+    if current_window == "main":
+        manager.update(time_delta)
     
     # Update GIF frames
     if not paused:
@@ -620,15 +621,16 @@ while running:
                 if pygame.time.get_ticks() % int(current_duration) < 17:  # 17ms is roughly 1 frame at 60fps
                     slot.frame_idx = (slot.frame_idx + 1) % len(slot.frames)
     
-    # Draw everything
-    screen.fill((30, 30, 30))
-    draw_main_stage()
-    draw_thumbnail_strip()
-    manager.draw_ui(screen)
-    pygame.display.flip()
-    
-    # Draw pop-out window if active
-    if popout_active:
+    # Draw based on current window
+    if current_window == "main":
+        # Draw main window
+        screen.fill((30, 30, 30))
+        draw_main_stage()
+        draw_thumbnail_strip()
+        manager.draw_ui(screen)
+        pygame.display.flip()
+    elif current_window == "stage":
+        # Draw stage window
         draw_popout_stage()
 
 pygame.quit()
