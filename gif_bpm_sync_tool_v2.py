@@ -14,7 +14,7 @@ UI_HEIGHT = 200  # Reduced for more compact layout
 THUMBNAIL_HEIGHT = 100
 MAX_SLOTS = 10
 MAX_BPM = 600
-STAGE_HEIGHT_RATIO = 0.6  # 60% of available height for stage (0.1 to 0.9)
+STAGE_HEIGHT_RATIO = 0.85  # 85% of available height for stage (0.1 to 0.9)
 
 # Pop-out window settings
 POPOUT_WIDTH = 800
