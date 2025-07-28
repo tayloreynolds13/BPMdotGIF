@@ -6,8 +6,6 @@ This version provides a web interface while maintaining the core functionality
 
 import os
 import sys
-import pygame
-import pygame_gui
 from PIL import Image, ImageSequence
 import time
 import io
@@ -223,10 +221,6 @@ def handle_tap():
     })
 
 if __name__ == '__main__':
-    # Set up pygame for headless environment
-    os.environ['SDL_VIDEODRIVER'] = 'dummy'
-    pygame.init()
-    
     # Start Flask app
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False) 
