@@ -10,7 +10,7 @@ from tkinter import filedialog
 DEFAULT_BEATS = 2
 MIN_WINDOW_WIDTH = 800
 MIN_WINDOW_HEIGHT = 600
-UI_HEIGHT = 350  # Increased to accommodate new controls
+UI_HEIGHT = 200  # Reduced for more compact layout
 THUMBNAIL_HEIGHT = 100
 MAX_SLOTS = 10
 MAX_BPM = 600
@@ -232,68 +232,66 @@ def create_ui():
     global manager, window_width, window_height
     manager = pygame_gui.UIManager((window_width, window_height))
     
-    # Main controls - now positioned above the thumbnail strip
+    # Main controls - compact multi-column layout
     y_start = window_height - UI_HEIGHT - THUMBNAIL_HEIGHT
     
-    # BPM controls
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 5, 140, 20), "BPM:", manager=manager)
-    bpm_input = pygame_gui.elements.UITextEntryLine(pygame.Rect(150, y_start + 5, 100, 30), manager=manager)
-    bpm_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 40, 200, 30), 
+    # Row 1: BPM controls (left side)
+    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 5, 60, 20), "BPM:", manager=manager)
+    bpm_input = pygame_gui.elements.UITextEntryLine(pygame.Rect(70, y_start + 5, 80, 25), manager=manager)
+    bpm_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(160, y_start + 5, 150, 25), 
                                                        start_value=0, value_range=(30, MAX_BPM), manager=manager)
     
-    # Speed controls
-    half_button = pygame_gui.elements.UIButton(pygame.Rect(370, y_start + 5, 80, 30), text="/2", manager=manager)
-    double_button = pygame_gui.elements.UIButton(pygame.Rect(460, y_start + 5, 80, 30), text="x2", manager=manager)
+    # Row 1: Speed controls (right side)
+    half_button = pygame_gui.elements.UIButton(pygame.Rect(320, y_start + 5, 40, 25), text="/2", manager=manager)
+    double_button = pygame_gui.elements.UIButton(pygame.Rect(370, y_start + 5, 40, 25), text="x2", manager=manager)
     
-    # Beat controls for active slot
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 80, 140, 20), "Beats in GIF:", manager=manager)
-    beats_input = pygame_gui.elements.UITextEntryLine(pygame.Rect(150, y_start + 80, 100, 30), manager=manager)
+    # Row 1: Beats control (far right)
+    pygame_gui.elements.UILabel(pygame.Rect(420, y_start + 5, 60, 20), "Beats:", manager=manager)
+    beats_input = pygame_gui.elements.UITextEntryLine(pygame.Rect(480, y_start + 5, 60, 25), manager=manager)
     beats_input.set_text(str(slots[active_slot].beats))
     
-    # File controls
-    upload_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 120, 150, 30), 
-                                               text="Upload GIF", manager=manager)
-    export_button = pygame_gui.elements.UIButton(pygame.Rect(180, y_start + 120, 150, 30), 
-                                               text="Export Active GIF", manager=manager)
+    # Row 2: File controls (left side)
+    upload_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 35, 100, 25), 
+                                               text="Upload", manager=manager)
+    export_button = pygame_gui.elements.UIButton(pygame.Rect(120, y_start + 35, 100, 25), 
+                                               text="Export", manager=manager)
     
-    # Squad Mode button
-    squad_button = pygame_gui.elements.UIButton(pygame.Rect(350, y_start + 120, 120, 30), 
-                                              text="Squad Mode", manager=manager)
+    # Row 2: Mode controls (center)
+    squad_button = pygame_gui.elements.UIButton(pygame.Rect(230, y_start + 35, 80, 25), 
+                                              text="Squad", manager=manager)
+    flip_button = pygame_gui.elements.UIButton(pygame.Rect(320, y_start + 35, 60, 25), 
+                                             text="Flip", manager=manager)
     
-    # Horizontal Flip button
-    flip_button = pygame_gui.elements.UIButton(pygame.Rect(480, y_start + 120, 80, 30), 
-                                             text="Flip H", manager=manager)
+    # Row 2: Window controls (right side)
+    popout_button = pygame_gui.elements.UIButton(pygame.Rect(390, y_start + 35, 80, 25), 
+                                               text="Stage", manager=manager)
+    close_popout_button = pygame_gui.elements.UIButton(pygame.Rect(480, y_start + 35, 80, 25), 
+                                                     text="Close", manager=manager)
     
-    # Zoom control
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 160, 140, 20), "Zoom:", manager=manager)
-    zoom_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 160, 200, 30), 
+    # Row 3: Zoom control (left side)
+    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 65, 60, 20), "Zoom:", manager=manager)
+    zoom_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(70, y_start + 65, 120, 25), 
                                                        start_value=1.0, value_range=(0.1, 3.0), manager=manager)
     
-    # Squad spacing control
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 200, 140, 20), "Squad Spacing:", manager=manager)
-    squad_spacing_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 200, 200, 30), 
+    # Row 3: Squad controls (center)
+    pygame_gui.elements.UILabel(pygame.Rect(200, y_start + 65, 80, 20), "Spacing:", manager=manager)
+    squad_spacing_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(280, y_start + 65, 100, 25), 
                                                                 start_value=squad_spacing, value_range=(0, 1), manager=manager)
     
-    # Squad size control
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 240, 140, 20), "Squad Size:", manager=manager)
-    squad_size_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 240, 200, 30), 
+    # Row 3: Squad size (right side)
+    pygame_gui.elements.UILabel(pygame.Rect(390, y_start + 65, 70, 20), "Size:", manager=manager)
+    squad_size_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(460, y_start + 65, 100, 25), 
                                                              start_value=squad_size, value_range=(0, 100), manager=manager)
     
-    # Stage height control
-    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 280, 140, 20), "Stage Height:", manager=manager)
-    stage_height_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 280, 200, 30), 
+    # Row 4: Stage height and background controls
+    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 95, 80, 20), "Height:", manager=manager)
+    stage_height_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(90, y_start + 95, 120, 25), 
                                                                start_value=STAGE_HEIGHT_RATIO, value_range=(0.1, 0.9), manager=manager)
     
-    # Pop-out window controls
-    popout_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 320, 120, 30), 
-                                               text="Pop-out Stage", manager=manager)
-    close_popout_button = pygame_gui.elements.UIButton(pygame.Rect(140, y_start + 320, 120, 30), 
-                                                     text="Close Stage", manager=manager)
-    
-    # Background controls
-    bg_color_button = pygame_gui.elements.UIButton(pygame.Rect(270, y_start + 320, 120, 30), 
+    # Row 4: Background controls (right side)
+    bg_color_button = pygame_gui.elements.UIButton(pygame.Rect(220, y_start + 95, 80, 25), 
                                                  text="BG Color", manager=manager)
-    bg_image_button = pygame_gui.elements.UIButton(pygame.Rect(400, y_start + 320, 120, 30), 
+    bg_image_button = pygame_gui.elements.UIButton(pygame.Rect(310, y_start + 95, 80, 25), 
                                                  text="BG Image", manager=manager)
     
     return {
