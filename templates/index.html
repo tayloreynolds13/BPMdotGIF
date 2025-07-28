@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 GIF BPM Sync Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .bpm-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bpm-slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .bpm-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .bpm-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .bpm-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #5a6fd8;
+            background: #e9ecef;
+        }
+
+        .file-upload.dragover {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .slot-indicators {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .slot-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .slot-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .slot-btn.loaded {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+
+        .export-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .export-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .bpm-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .button-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 GIF BPM Sync Tool</h1>
+            <p>Synchronize GIF animations to music BPM</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Controls Card -->
+            <div class="card">
+                <h2>🎛️ BPM Controls</h2>
+                
+                <div class="control-group">
+                    <label>BPM (Beats Per Minute)</label>
+                    <div class="bpm-controls">
+                        <input type="range" id="bpm-slider" class="bpm-slider" min="30" max="600" value="120">
+                        <div class="bpm-display" id="bpm-display">120</div>
+                    </div>
+                    <input type="number" id="bpm-input" value="120" min="30" max="600" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div class="control-group">
+                    <label>Quick BPM Buttons</label>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="adjustBPM(-10)">-10</button>
+                        <button class="btn btn-secondary" onclick="adjustBPM(-1)">-1</button>
+                        <button class="btn btn-primary" onclick="tapBPM()">🎵 Tap BPM</button>
+                        <button class="btn btn-secondary" onclick="adjustBPM(1)">+1</button>
+                        <button class="btn btn-secondary" onclick="adjustBPM(10)">+10</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Beats in GIF</label>
+                    <input type="number" id="beats-input" value="2" min="0.1" max="20" step="0.1" style="width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+
+                <div class="control-group">
+                    <label>Animation Slots</label>
+                    <div class="slot-indicators" id="slot-indicators">
+                        <!-- Slots will be generated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="togglePause()" id="pause-btn">⏸️ Pause</button>
+                    <button class="btn btn-success" onclick="exportInfo()">📊 Export Info</button>
+                </div>
+            </div>
+
+            <!-- Upload Card -->
+            <div class="card">
+                <h2>📁 GIF Upload</h2>
+                
+                <div class="file-upload" id="file-upload">
+                    <p>📁 Drag & drop a GIF here or click to select</p>
+                    <input type="file" id="file-input" accept=".gif" style="display: none;">
+                </div>
+
+                <div id="upload-status"></div>
+
+                <div class="export-info" id="export-info" style="display: none;">
+                    <h3>📊 Sync Calculations</h3>
+                    <div id="export-details"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBPM = 120;
+        let currentBeats = 2;
+        let isPaused = false;
+        let activeSlot = 0;
+        let slots = Array(10).fill().map(() => ({ isLoaded: false, beats: 2 }));
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSlots();
+            updateDisplay();
+            loadState();
+        });
+
+        function initializeSlots() {
+            const container = document.getElementById('slot-indicators');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                btn.textContent = i === 9 ? '0' : (i + 1).toString();
+                btn.onclick = () => setActiveSlot(i);
+                container.appendChild(btn);
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('bpm-display').textContent = currentBPM;
+            document.getElementById('bpm-slider').value = currentBPM;
+            document.getElementById('bpm-input').value = currentBPM;
+            document.getElementById('beats-input').value = currentBeats;
+            document.getElementById('pause-btn').textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
+            
+            // Update slot indicators
+            const slotBtns = document.querySelectorAll('.slot-btn');
+            slotBtns.forEach((btn, index) => {
+                btn.className = 'slot-btn';
+                if (index === activeSlot) btn.classList.add('active');
+                if (slots[index].isLoaded) btn.classList.add('loaded');
+            });
+        }
+
+        // BPM Controls
+        document.getElementById('bpm-slider').addEventListener('input', function() {
+            currentBPM = parseInt(this.value);
+            updateDisplay();
+            setBPM(currentBPM);
+        });
+
+        document.getElementById('bpm-input').addEventListener('change', function() {
+            currentBPM = parseInt(this.value);
+            updateDisplay();
+            setBPM(currentBPM);
+        });
+
+        document.getElementById('beats-input').addEventListener('change', function() {
+            currentBeats = parseFloat(this.value);
+            setBeats(currentBeats);
+        });
+
+        function adjustBPM(delta) {
+            currentBPM = Math.max(30, Math.min(600, currentBPM + delta));
+            updateDisplay();
+            setBPM(currentBPM);
+        }
+
+        function setActiveSlot(slot) {
+            activeSlot = slot;
+            updateDisplay();
+            fetch('/api/slot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slot: slot })
+            });
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            updateDisplay();
+            fetch('/api/pause', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // File Upload
+        const fileUpload = document.getElementById('file-upload');
+        const fileInput = document.getElementById('file-input');
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        });
+
+        function uploadFile(file) {
+            if (!file.type.includes('gif')) {
+                showStatus('Please select a GIF file', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showStatus('Uploading GIF...', 'info');
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(`GIF uploaded successfully! ${data.frame_count} frames, ${data.beats} beats`, 'success');
+                    slots[activeSlot] = { isLoaded: true, beats: data.beats };
+                    currentBeats = data.beats;
+                    updateDisplay();
+                } else {
+                    showStatus('Upload failed: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Upload failed: ' + error.message, 'error');
+            });
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('upload-status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        // Tap BPM
+        let tapTimes = [];
+        function tapBPM() {
+            const now = Date.now();
+            tapTimes = tapTimes.filter(time => now - time < 4000);
+            
+            if (tapTimes.length > 0) {
+                const timeSinceLast = now - tapTimes[tapTimes.length - 1];
+                if (timeSinceLast > 100) {
+                    tapTimes.push(now);
+                }
+            } else {
+                tapTimes.push(now);
+            }
+
+            if (tapTimes.length > 8) {
+                tapTimes.shift();
+            }
+
+            fetch('/api/tap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentBPM = data.bpm;
+                    updateDisplay();
+                    showStatus(`BPM set to ${data.bpm} (${data.tap_count} taps)`, 'success');
+                }
+            });
+        }
+
+        // Export Info
+        function exportInfo() {
+            fetch('/api/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const info = data.export_info;
+                    const details = document.getElementById('export-details');
+                    details.innerHTML = `
+                        <div class="info-row">
+                            <span class="info-label">BPM:</span>
+                            <span class="info-value">${info.bpm}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Beats:</span>
+                            <span class="info-value">${info.beats}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Speed Multiplier:</span>
+                            <span class="info-value">${info.speed_multiplier.toFixed(3)}x</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Target Duration:</span>
+                            <span class="info-value">${info.target_duration.toFixed(0)}ms</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Export Filename:</span>
+                            <span class="info-value">${info.filename}</span>
+                        </div>
+                    `;
+                    document.getElementById('export-info').style.display = 'block';
+                    showStatus('Export calculations ready!', 'success');
+                } else {
+                    showStatus('Export failed: ' + data.error, 'error');
+                }
+            });
+        }
+
+        // API Functions
+        function setBPM(bpm) {
+            fetch('/api/bpm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bpm: bpm })
+            });
+        }
+
+        function setBeats(beats) {
+            fetch('/api/beats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ beats: beats })
+            });
+        }
+
+        function loadState() {
+            fetch('/api/state')
+            .then(response => response.json())
+            .then(data => {
+                currentBPM = data.bpm;
+                currentBeats = data.beats;
+                isPaused = data.paused;
+                activeSlot = data.active_slot;
+                slots = data.slots.map(slot => ({
+                    isLoaded: slot.is_loaded,
+                    beats: slot.beats
+                }));
+                updateDisplay();
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    adjustBPM(-1);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    adjustBPM(1);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    adjustBPM(e.shiftKey ? 10 : 1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    adjustBPM(e.shiftKey ? -10 : -1);
+                    break;
+                default:
+                    if (e.key >= '0' && e.key <= '9') {
+                        const slot = e.key === '0' ? 9 : parseInt(e.key) - 1;
+                        setActiveSlot(slot);
+                    }
+            }
+        });
+    </script>
+</body>
+</html> 
