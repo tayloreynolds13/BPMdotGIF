@@ -54,6 +54,11 @@ def index():
     """Main web interface"""
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Railway"""
+    return jsonify({'status': 'healthy', 'message': 'BPMdotGIF is running'})
+
 @app.route('/api/state')
 def get_state():
     """Get current app state"""
