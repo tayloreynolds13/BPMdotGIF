@@ -1,6 +1,6 @@
 # 🎵 GIF BPM Sync Tool
 
-A powerful tool for synchronizing GIF animations to music BPM (Beats Per Minute). Perfect for DJs, content creators, and music producers who want to create perfectly timed visual content.
+A powerful desktop tool for synchronizing GIF animations to music BPM (Beats Per Minute). Perfect for DJs, content creators, and music producers who want to create perfectly timed visual content.
 
 ## ✨ Features
 
@@ -8,31 +8,17 @@ A powerful tool for synchronizing GIF animations to music BPM (Beats Per Minute)
 - **📁 GIF Upload & Processing** - Upload GIFs and extract beat information from filenames
 - **🎯 10 Animation Slots** - Manage multiple GIFs with hotkeys (1-10)
 - **⚡ Speed Calculation** - Real-time sync calculations and speed multipliers
-- **📱 Multiple Interfaces** - Desktop app, web interface, and Streamlit wrapper
 - **🎮 Hotkey Support** - Full keyboard shortcuts for quick control
 - **🔄 Export Ready** - Get sync calculations for external processing
+- **🎬 Stage Window** - Clean window for streaming to OBS
 
 ## 🚀 Quick Start
 
-### Desktop App (Recommended)
-```bash
-# Run the full desktop application
-python3 gif_bpm_sync_tool_v2.py
-```
-
-### Web Interface
-```bash
-# Start the web version
-cd gif-bpm-sync-web
-python3 -m http.server 8000
-# Visit http://localhost:8000
-```
-
-### Streamlit Web App
-```bash
-# Run Streamlit wrapper
-streamlit run streamlit_wrapper.py
-```
+### Download & Run
+1. **Download** `gif_bpm_sync_tool_v2.py` from this repository
+2. **Install Python** (3.8 or higher)
+3. **Install dependencies**: `pip install pygame pygame-gui pillow`
+4. **Run**: `python3 gif_bpm_sync_tool_v2.py`
 
 ## 📦 Installation
 
@@ -42,12 +28,14 @@ streamlit run streamlit_wrapper.py
 
 ### Install Dependencies
 ```bash
-pip install pygame pygame-gui pillow streamlit flask
+pip install pygame pygame-gui pillow
 ```
 
 ## 🎮 Usage
 
 ### Desktop App Controls
+
+#### 🎹 Hotkeys
 - **1-9:** Switch to slot 1-9
 - **0:** Switch to slot 10
 - **Space:** Pause/Play
@@ -55,42 +43,46 @@ pip install pygame pygame-gui pillow streamlit flask
 - **↑/↓:** Adjust BPM ±1
 - **Shift+↑/↓:** Adjust BPM ±10
 - **Click:** Tap to set BPM
+- **ESC:** Switch between main window and stage window
 
-### Web Interface
-- **Upload GIF:** Drag & drop or click to select
-- **BPM Slider:** Adjust BPM from 30-600
-- **Tap Button:** Click to set BPM by tapping
-- **Beats Input:** Set number of beats in GIF
-- **Export:** Get sync calculations
+#### 🎛️ UI Controls
 
-## 🌐 Deployment
+**Row 1 - BPM & Beats:**
+- **BPM Input:** Type exact BPM value
+- **BPM Slider:** Drag to adjust BPM (30-600)
+- **/2 & x2 Buttons:** Quick BPM halving/doubling
+- **Beats Input:** Set number of beats in current GIF
 
-### Railway (Recommended)
-```bash
-# Deploy to Railway
-git push origin main
-# Visit railway.app and connect your repo
-```
+**Row 2 - File & Mode:**
+- **Upload:** Select GIF file to load
+- **Export:** Save sync calculations
+- **Squad:** Toggle backup dancer mode
+- **Flip:** Horizontal flip GIF
+- **Stage:** Open clean stage window for streaming
 
-### Streamlit Cloud
-```bash
-# Deploy to Streamlit Cloud
-# Push to GitHub and connect at share.streamlit.io
-```
+**Row 3 - Sliders:**
+- **Zoom:** Scale GIF size (0.1x to 3x)
+- **Spacing:** Squad dancer spacing (0-1)
+- **Size:** Squad dancer size (0-100%)
+
+**Row 4 - Background:**
+- **BG Color:** Cycle through preset background colors
+- **BG Image:** Select custom background image
+- **Clear BG:** Remove background image
+
+**Bottom Strip:**
+- **Slots 1-10:** Click to switch between GIF slots
+
+
+
+
 
 ## 📁 Project Structure
 
 ```
-gif_bpm_sync_tool_v2_with_launchers/
+BPMdotGIF/
 ├── gif_bpm_sync_tool_v2.py          # Main desktop app
-├── railway_app.py                    # Railway web app
-├── streamlit_wrapper.py              # Streamlit web interface
-├── gif-bpm-sync-web/                # Pure web version
-├── templates/                        # Web templates
 ├── requirements.txt                  # Python dependencies
-├── railway_requirements.txt          # Railway dependencies
-├── run_gif_bpm_tool.sh             # Linux/Mac launcher
-├── run_gif_bpm_tool.bat            # Windows launcher
 └── README.md                        # This file
 ```
 
@@ -99,16 +91,29 @@ gif_bpm_sync_tool_v2_with_launchers/
 - **DJs** - Sync visual effects to music
 - **Content Creators** - Create timed animations
 - **Music Producers** - Visualize beats and rhythms
-- **Streamers** - Add animated overlays
+- **Streamers** - Add animated overlays (use Stage window for OBS)
 - **Video Editors** - Precise timing for animations
+
+## 🎬 Stage Window for Streaming
+
+The **Stage Window** feature creates a clean, separate window perfect for streaming:
+
+1. **Click "Stage"** - Opens a clean window with just the GIF
+2. **Press ESC** - Switch between main controls and stage window
+3. **In OBS** - Use "Window Capture" and select "BPMdotGIF - Stage Window"
+4. **No controls visible** - Perfect for clean streams
+
+**Perfect for:**
+- 🎥 **OBS Streaming** - Clean overlay without controls
+- 📱 **Social Media** - Record just the animation
+- 🎮 **Gaming Streams** - Animated overlays
+- 🎵 **Music Videos** - Sync visuals to beats
 
 ## 🔧 Technical Details
 
 ### Core Features
 - **Pygame GUI** - Desktop interface with pygame_gui
 - **PIL/Pillow** - GIF processing and frame extraction
-- **Flask** - Web API and interface
-- **Streamlit** - Data science web interface
 - **Real-time Calculation** - Instant BPM sync math
 
 ### File Naming Convention
@@ -139,15 +144,11 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Pygame** - Game development framework
 - **Pillow** - Image processing library
-- **Streamlit** - Web app framework
-- **Flask** - Web framework
-- **Railway** - Deployment platform
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/gif-bpm-sync-tool/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/gif-bpm-sync-tool/discussions)
-- **Email:** your-email@example.com
+- **Issues:** [GitHub Issues](https://github.com/tayloreynolds13/BPMdotGIF/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/tayloreynolds13/BPMdotGIF/discussions)
 
 ---
 
