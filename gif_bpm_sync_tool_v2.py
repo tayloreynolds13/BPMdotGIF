@@ -15,6 +15,16 @@ THUMBNAIL_HEIGHT = 100
 MAX_SLOTS = 10
 MAX_BPM = 600
 
+# Pop-out window settings
+POPOUT_WIDTH = 800
+POPOUT_HEIGHT = 600
+popout_window = None
+popout_screen = None
+popout_active = False
+stage_background_color = (20, 20, 20)  # Default dark gray
+stage_background_image = None
+stage_background_image_surface = None
+
 # INIT
 tk.Tk().withdraw()
 pygame.init()
@@ -53,6 +63,150 @@ horizontal_flip = False  # Whether to flip the GIF horizontally
 # Setup
 screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
 manager = pygame_gui.UIManager((window_width, window_height))
+
+def create_popout_window():
+    """Create the pop-out window for streaming/OBS"""
+    global popout_window, popout_screen, popout_active
+    if popout_window is None:
+        popout_window = pygame.display.set_mode((POPOUT_WIDTH, POPOUT_HEIGHT), pygame.RESIZABLE)
+        popout_screen = popout_window
+        popout_active = True
+        pygame.display.set_caption("BPMdotGIF - Stage Window")
+
+def close_popout_window():
+    """Close the pop-out window"""
+    global popout_window, popout_screen, popout_active
+    if popout_window is not None:
+        popout_window = None
+        popout_screen = None
+        popout_active = False
+        pygame.display.set_caption("GIF BPM Sync Tool v3")
+
+def set_stage_background_color(color):
+    """Set the stage background color"""
+    global stage_background_color
+    stage_background_color = color
+
+def set_stage_background_image(image_path):
+    """Set a custom background image for the stage"""
+    global stage_background_image, stage_background_image_surface
+    try:
+        if image_path and os.path.exists(image_path):
+            # Load and scale the background image
+            bg_image = pygame.image.load(image_path)
+            stage_background_image = image_path
+            stage_background_image_surface = bg_image
+        else:
+            stage_background_image = None
+            stage_background_image_surface = None
+    except Exception as e:
+        print(f"Error loading background image: {e}")
+        stage_background_image = None
+        stage_background_image_surface = None
+
+def draw_stage_background(target_screen, stage_rect):
+    """Draw the stage background (color or image)"""
+    if stage_background_image_surface is not None:
+        # Scale background image to fit the stage
+        scaled_bg = pygame.transform.smoothscale(stage_background_image_surface, 
+                                               (stage_rect.width, stage_rect.height))
+        target_screen.blit(scaled_bg, (stage_rect.x, stage_rect.y))
+    else:
+        # Draw solid color background
+        pygame.draw.rect(target_screen, stage_background_color, stage_rect)
+
+def draw_gif_on_stage(target_screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip):
+    """Draw the GIF on the stage (extracted from draw_main_stage for reuse)"""
+    if not slot.is_loaded:
+        return
+        
+    if squad_mode:
+        # Squad mode: draw backup dancers first (behind), then main dancer
+        
+        # Calculate main GIF dimensions
+        main_scale = min(stage_rect.width / slot.width, stage_rect.height / slot.height) * zoom_level
+        main_width = int(slot.width * main_scale)
+        main_height = int(slot.height * main_scale)
+        
+        # Calculate backup dancer dimensions based on squad size slider
+        size_multiplier = 0.25 + (squad_size / 100.0) * 0.75
+        backup_scale = main_scale * size_multiplier
+        backup_width = int(slot.width * backup_scale)
+        backup_height = int(slot.height * backup_scale)
+        
+        # Calculate main GIF's top-left position
+        main_x = stage_rect.x + (stage_rect.width - main_width) // 2
+        main_y = stage_rect.y + (stage_rect.height - main_height) // 2
+        
+        # Calculate spacing based on slider value
+        effective_slider_value = squad_spacing ** 2
+        actual_offset = effective_slider_value * main_width
+        
+        # Calculate backup dancer center X positions
+        main_center_x = main_x + main_width / 2.0
+        
+        backup_center_x_left = main_center_x - actual_offset
+        backup_center_x_right = main_center_x + actual_offset
+        
+        # Convert backup dancer center positions to top-left blit positions
+        left_x = backup_center_x_left - backup_width / 2.0
+        right_x = backup_center_x_right - backup_width / 2.0
+        
+        # Vertical position for backup dancers
+        backup_y = main_y + (main_height - backup_height) / 2.0
+        
+        # Draw left backup dancer
+        current_frame = slot.frames[slot.frame_idx]
+        if horizontal_flip:
+            current_frame = pygame.transform.flip(current_frame, True, False)
+        left_backup = pygame.transform.smoothscale(current_frame, (backup_width, backup_height))
+        target_screen.blit(left_backup, (int(left_x), int(backup_y)))
+        
+        # Draw right backup dancer  
+        right_backup = pygame.transform.smoothscale(current_frame, (backup_width, backup_height))
+        target_screen.blit(right_backup, (int(right_x), int(backup_y)))
+        
+        # Draw main dancer (on top)
+        main_frame = pygame.transform.smoothscale(current_frame, (main_width, main_height))
+        target_screen.blit(main_frame, (main_x, main_y))
+        
+    else:
+        # Normal mode: single GIF centered
+        scale = min(stage_rect.width / slot.width, stage_rect.height / slot.height) * zoom_level
+        scaled_width = int(slot.width * scale)
+        scaled_height = int(slot.height * scale)
+        
+        # Center the GIF in the stage
+        x = stage_rect.x + (stage_rect.width - scaled_width) // 2
+        y = stage_rect.y + (stage_rect.height - scaled_height) // 2
+        
+        # Scale and draw the current frame
+        current_frame = slot.frames[slot.frame_idx]
+        if horizontal_flip:
+            current_frame = pygame.transform.flip(current_frame, True, False)
+        scaled_frame = pygame.transform.smoothscale(current_frame, (scaled_width, scaled_height))
+        target_screen.blit(scaled_frame, (x, y))
+
+def draw_popout_stage():
+    """Draw the stage in the pop-out window"""
+    if not popout_active or popout_screen is None:
+        return
+        
+    # Clear the popout screen
+    popout_screen.fill((0, 0, 0))
+    
+    # Calculate stage area (full window for popout)
+    stage_rect = pygame.Rect(0, 0, POPOUT_WIDTH, POPOUT_HEIGHT)
+    
+    # Draw stage background
+    draw_stage_background(popout_screen, stage_rect)
+    
+    # Draw active GIF
+    slot = slots[active_slot]
+    draw_gif_on_stage(popout_screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip)
+    
+    # Update the popout display
+    pygame.display.flip()
 
 def create_ui():
     global manager, window_width, window_height
@@ -105,6 +259,18 @@ def create_ui():
     squad_size_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 240, 200, 30), 
                                                              start_value=squad_size, value_range=(0, 100), manager=manager)
     
+    # Pop-out window controls
+    popout_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 280, 120, 30), 
+                                               text="Pop-out Stage", manager=manager)
+    close_popout_button = pygame_gui.elements.UIButton(pygame.Rect(140, y_start + 280, 120, 30), 
+                                                     text="Close Stage", manager=manager)
+    
+    # Background controls
+    bg_color_button = pygame_gui.elements.UIButton(pygame.Rect(270, y_start + 280, 120, 30), 
+                                                 text="BG Color", manager=manager)
+    bg_image_button = pygame_gui.elements.UIButton(pygame.Rect(400, y_start + 280, 120, 30), 
+                                                 text="BG Image", manager=manager)
+    
     return {
         'bpm_input': bpm_input,
         'bpm_slider': bpm_slider,
@@ -117,7 +283,11 @@ def create_ui():
         'squad_button': squad_button,
         'squad_spacing_slider': squad_spacing_slider,
         'squad_size_slider': squad_size_slider,
-        'flip_button': flip_button
+        'flip_button': flip_button,
+        'popout_button': popout_button,
+        'close_popout_button': close_popout_button,
+        'bg_color_button': bg_color_button,
+        'bg_image_button': bg_image_button
     }
 
 ui_elements = create_ui()
@@ -196,80 +366,11 @@ def draw_main_stage():
     stage_rect = pygame.Rect(0, 0, window_width, stage_height)
     
     # Draw stage background
-    pygame.draw.rect(screen, (20, 20, 20), stage_rect)
+    draw_stage_background(screen, stage_rect)
     
     # Draw active GIF if loaded
     slot = slots[active_slot]
-    if slot.is_loaded:
-        if squad_mode:
-            # Squad mode: draw backup dancers first (behind), then main dancer
-            
-            # Calculate main GIF dimensions
-            main_scale = min(stage_rect.width / slot.width, stage_rect.height / slot.height) * zoom_level
-            main_width = int(slot.width * main_scale)
-            main_height = int(slot.height * main_scale)
-            
-            # Calculate backup dancer dimensions based on squad size slider
-            size_multiplier = 0.25 + (squad_size / 100.0) * 0.75
-            backup_scale = main_scale * size_multiplier
-            backup_width = int(slot.width * backup_scale)
-            backup_height = int(slot.height * backup_scale)
-            
-            # Calculate main GIF's top-left position
-            main_x = (stage_rect.width - main_width) // 2
-            main_y = (stage_rect.height - main_height) // 2
-            
-            # Calculate spacing based on slider value (squad_spacing is 0.0 to 1.0)
-            # Offset from the main GIF's center to each backup dancer's center.
-            # Using squad_spacing ** 2 for finer control near the center.
-            # Max offset (when slider is 1.0) is 1.0 * main_width.
-            effective_slider_value = squad_spacing ** 2
-            actual_offset = effective_slider_value * main_width
-            
-            # Calculate backup dancer center X positions
-            main_center_x = main_x + main_width / 2.0 # Use float for precision
-            
-            backup_center_x_left = main_center_x - actual_offset
-            backup_center_x_right = main_center_x + actual_offset
-            
-            # Convert backup dancer center positions to top-left blit positions
-            left_x = backup_center_x_left - backup_width / 2.0
-            right_x = backup_center_x_right - backup_width / 2.0
-            
-            # Vertical position for backup dancers (center them vertically with the main GIF)
-            backup_y = main_y + (main_height - backup_height) / 2.0
-            
-            # Draw left backup dancer
-            current_frame = slot.frames[slot.frame_idx]
-            if horizontal_flip:
-                current_frame = pygame.transform.flip(current_frame, True, False)
-            left_backup = pygame.transform.smoothscale(current_frame, (backup_width, backup_height))
-            screen.blit(left_backup, (int(left_x), int(backup_y)))
-            
-            # Draw right backup dancer  
-            right_backup = pygame.transform.smoothscale(current_frame, (backup_width, backup_height))
-            screen.blit(right_backup, (int(right_x), int(backup_y)))
-            
-            # Draw main dancer (on top)
-            main_frame = pygame.transform.smoothscale(current_frame, (main_width, main_height))
-            screen.blit(main_frame, (main_x, main_y))
-            
-        else:
-            # Normal mode: single GIF centered
-            scale = min(stage_rect.width / slot.width, stage_rect.height / slot.height) * zoom_level
-            scaled_width = int(slot.width * scale)
-            scaled_height = int(slot.height * scale)
-            
-            # Center the GIF in the stage
-            x = (stage_rect.width - scaled_width) // 2
-            y = (stage_rect.height - scaled_height) // 2
-            
-            # Scale and draw the current frame
-            current_frame = slot.frames[slot.frame_idx]
-            if horizontal_flip:
-                current_frame = pygame.transform.flip(current_frame, True, False)
-            scaled_frame = pygame.transform.smoothscale(current_frame, (scaled_width, scaled_height))
-            screen.blit(scaled_frame, (x, y))
+    draw_gif_on_stage(screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip)
 
 def draw_thumbnail_strip():
     # Calculate thumbnail strip area
@@ -416,6 +517,24 @@ while running:
                 squad_mode = not squad_mode
             elif event.ui_element == ui_elements['flip_button']:
                 horizontal_flip = not horizontal_flip
+            elif event.ui_element == ui_elements['popout_button']:
+                create_popout_window()
+            elif event.ui_element == ui_elements['close_popout_button']:
+                close_popout_window()
+            elif event.ui_element == ui_elements['bg_color_button']:
+                # Simple color picker - cycle through some preset colors
+                colors = [(20, 20, 20), (0, 0, 0), (50, 50, 50), (100, 0, 100), (0, 100, 100)]
+                current_index = colors.index(stage_background_color) if stage_background_color in colors else 0
+                next_index = (current_index + 1) % len(colors)
+                set_stage_background_color(colors[next_index])
+            elif event.ui_element == ui_elements['bg_image_button']:
+                # Open file dialog for background image
+                bg_path = filedialog.askopenfilename(
+                    title="Select Background Image",
+                    filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.gif")]
+                )
+                if bg_path:
+                    set_stage_background_image(bg_path)
         
         if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
             if event.ui_element == ui_elements['bpm_input']:
@@ -468,5 +587,9 @@ while running:
     draw_thumbnail_strip()
     manager.draw_ui(screen)
     pygame.display.flip()
+    
+    # Draw pop-out window if active
+    if popout_active:
+        draw_popout_stage()
 
 pygame.quit()
