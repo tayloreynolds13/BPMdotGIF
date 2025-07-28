@@ -10,10 +10,11 @@ from tkinter import filedialog
 DEFAULT_BEATS = 2
 MIN_WINDOW_WIDTH = 800
 MIN_WINDOW_HEIGHT = 600
-UI_HEIGHT = 310
+UI_HEIGHT = 350  # Increased to accommodate new controls
 THUMBNAIL_HEIGHT = 100
 MAX_SLOTS = 10
 MAX_BPM = 600
+STAGE_HEIGHT_RATIO = 0.6  # 60% of available height for stage (0.1 to 0.9)
 
 # Pop-out window settings
 POPOUT_WIDTH = 800
@@ -59,6 +60,7 @@ squad_mode = False
 squad_spacing = 0.5  # 0-1 range: 0=directly behind, 1=3x gif width spacing
 squad_size = 80  # 0-100 range: 0=25% size, 100=100% size
 horizontal_flip = False  # Whether to flip the GIF horizontally
+stage_height_ratio = STAGE_HEIGHT_RATIO  # Configurable stage height ratio
 
 # Setup
 screen = pygame.display.set_mode((window_width, window_height), pygame.RESIZABLE)
@@ -68,12 +70,12 @@ def create_popout_window():
     """Create the pop-out window for streaming/OBS"""
     global popout_window, popout_screen, popout_active
     if popout_window is None:
-        # Create a separate surface for the pop-out window
+        # Create a separate surface for the pop-out (will be saved as image)
         popout_screen = pygame.Surface((POPOUT_WIDTH, POPOUT_HEIGHT))
         popout_active = True
         print("Pop-out window created!")
-        print("For OBS: Use 'Window Capture' and select this application window")
-        print("The pop-out preview will appear in the top-right corner of the main window")
+        print("The pop-out content will be saved as 'stage_window.png' for OBS")
+        print("In OBS: Use 'Image' source and select 'stage_window.png'")
 
 def close_popout_window():
     """Close the pop-out window"""
@@ -214,26 +216,27 @@ def draw_popout_stage():
     slot = slots[active_slot]
     draw_gif_on_stage(popout_screen, stage_rect, slot, zoom_level, squad_mode, squad_size, horizontal_flip)
     
-    # Draw the popout screen to the main display (top-right corner)
-    if popout_active:
-        # Create a smaller preview in the main window
-        preview_width = 300
-        preview_height = 200
-        preview_x = window_width - preview_width - 10
-        preview_y = 10
-        
-        # Draw border around preview
-        pygame.draw.rect(screen, (100, 100, 100), (preview_x - 2, preview_y - 2, preview_width + 4, preview_height + 4))
-        pygame.draw.rect(screen, (200, 200, 200), (preview_x - 1, preview_y - 1, preview_width + 2, preview_height + 2))
-        
-        # Draw preview
-        preview_surface = pygame.transform.smoothscale(popout_screen, (preview_width, preview_height))
-        screen.blit(preview_surface, (preview_x, preview_y))
-        
-        # Draw label
-        font = pygame.font.Font(None, 24)
-        label = font.render("OBS Preview", True, (255, 255, 255))
-        screen.blit(label, (preview_x, preview_y - 25))
+    # Save the pop-out content as an image for OBS
+    pygame.image.save(popout_screen, "stage_window.png")
+    
+    # Draw preview in main window
+    preview_width = 300
+    preview_height = 200
+    preview_x = window_width - preview_width - 10
+    preview_y = 10
+    
+    # Draw border around preview
+    pygame.draw.rect(screen, (100, 100, 100), (preview_x - 2, preview_y - 2, preview_width + 4, preview_height + 4))
+    pygame.draw.rect(screen, (200, 200, 200), (preview_x - 1, preview_y - 1, preview_width + 2, preview_height + 2))
+    
+    # Draw preview
+    preview_surface = pygame.transform.smoothscale(popout_screen, (preview_width, preview_height))
+    screen.blit(preview_surface, (preview_x, preview_y))
+    
+    # Draw label
+    font = pygame.font.Font(None, 24)
+    label = font.render("OBS Image", True, (255, 255, 255))
+    screen.blit(label, (preview_x, preview_y - 25))
 
 def create_ui():
     global manager, window_width, window_height
@@ -286,16 +289,21 @@ def create_ui():
     squad_size_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 240, 200, 30), 
                                                              start_value=squad_size, value_range=(0, 100), manager=manager)
     
+    # Stage height control
+    pygame_gui.elements.UILabel(pygame.Rect(10, y_start + 280, 140, 20), "Stage Height:", manager=manager)
+    stage_height_slider = pygame_gui.elements.UIHorizontalSlider(pygame.Rect(150, y_start + 280, 200, 30), 
+                                                               start_value=STAGE_HEIGHT_RATIO, value_range=(0.1, 0.9), manager=manager)
+    
     # Pop-out window controls
-    popout_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 280, 120, 30), 
+    popout_button = pygame_gui.elements.UIButton(pygame.Rect(10, y_start + 320, 120, 30), 
                                                text="Pop-out Stage", manager=manager)
-    close_popout_button = pygame_gui.elements.UIButton(pygame.Rect(140, y_start + 280, 120, 30), 
+    close_popout_button = pygame_gui.elements.UIButton(pygame.Rect(140, y_start + 320, 120, 30), 
                                                      text="Close Stage", manager=manager)
     
     # Background controls
-    bg_color_button = pygame_gui.elements.UIButton(pygame.Rect(270, y_start + 280, 120, 30), 
+    bg_color_button = pygame_gui.elements.UIButton(pygame.Rect(270, y_start + 320, 120, 30), 
                                                  text="BG Color", manager=manager)
-    bg_image_button = pygame_gui.elements.UIButton(pygame.Rect(400, y_start + 280, 120, 30), 
+    bg_image_button = pygame_gui.elements.UIButton(pygame.Rect(400, y_start + 320, 120, 30), 
                                                  text="BG Image", manager=manager)
     
     return {
@@ -311,6 +319,7 @@ def create_ui():
         'squad_spacing_slider': squad_spacing_slider,
         'squad_size_slider': squad_size_slider,
         'flip_button': flip_button,
+        'stage_height_slider': stage_height_slider,
         'popout_button': popout_button,
         'close_popout_button': close_popout_button,
         'bg_color_button': bg_color_button,
@@ -388,8 +397,9 @@ def export_adjusted_gif(slot, speed_mult):
         )
 
 def draw_main_stage():
-    # Calculate main stage area
-    stage_height = window_height - UI_HEIGHT - THUMBNAIL_HEIGHT
+    # Calculate main stage area with configurable height ratio
+    available_height = window_height - UI_HEIGHT - THUMBNAIL_HEIGHT
+    stage_height = int(available_height * stage_height_ratio)
     stage_rect = pygame.Rect(0, 0, window_width, stage_height)
     
     # Draw stage background
@@ -589,6 +599,8 @@ while running:
                 squad_spacing = event.value
             elif event.ui_element == ui_elements['squad_size_slider']:
                 squad_size = int(event.value)
+            elif event.ui_element == ui_elements['stage_height_slider']:
+                stage_height_ratio = event.value
         
         manager.process_events(event)
     
